@@ -9,6 +9,12 @@ Requires: pip install umap-learn matplotlib
 """
 
 import os
+
+# Pin the TabPFN model version so the figure always compares the same models,
+# regardless of the tabpfn package's future defaults. Must be set before the
+# tabpfn settings are first read.
+os.environ.setdefault("TABPFN_MODEL_VERSION", "v3")
+
 import time
 
 import matplotlib.pyplot as plt
@@ -50,10 +56,15 @@ DATASETS = [
     ("California housing\nregression", california_housing),
 ]
 
+# The figure always compares these specific model versions:
+# - TabICLv2:     tabicl's default checkpoints are pinned upstream
+#                 (tabicl-classifier/regressor-v2-20260212.ckpt)
+# - TabFM v1.0.0: the tabfm package ships exactly the v1.0.0 weights
+# - TabPFNv3:     pinned via TABPFN_MODEL_VERSION above
 BACKENDS = [
     ("TabICLv2", lambda: TabularEmbedder("tabicl")),
-    ("TabPFN", lambda: TabularEmbedder("tabpfn")),
-    ("TabFM", lambda: TabularEmbedder("tabfm", n_estimators=4)),
+    ("TabFM v1.0.0", lambda: TabularEmbedder("tabfm", n_estimators=4)),
+    ("TabPFNv3", lambda: TabularEmbedder("tabpfn")),
 ]
 
 fig, axes = plt.subplots(3, 3, figsize=(15, 13.5), layout="constrained")
