@@ -77,6 +77,27 @@ Backend-specific options are passed through the constructor:
 model = TabularTransformer("tabicl", n_estimators=4, device="cpu", random_state=0)
 ```
 
+### Do I need `y`?
+
+All three backends are supervised in-context learners: the context table must
+contain a target. TabICL's and TabFM's column/cell embedders are target-aware,
+and TabPFN attends over labeled context tokens — none of them has a truly
+unsupervised mode.
+
+`fit` therefore never skips the target; it resolves it:
+
+| You pass | What happens | Embedding space |
+|----------|--------------|-----------------|
+| Discrete `y` | Classification checkpoint | Shaped by the classification task |
+| Continuous `y` | Regression checkpoint | Shaped by the regression task |
+| No `y` | Regression checkpoint with a **pseudo-target** (standard-normal noise, seeded by `random_state`) | Approximately task-neutral (**experimental**) |
+
+This behavior is identical across all backends. The pseudo-target makes the
+context labels uninformative so the embeddings mostly reflect feature
+structure, but this strategy is unvalidated — if you have a meaningful target,
+pass it. Note that with no `y`, changing `random_state` changes the noise and
+therefore the embeddings.
+
 ### Ensemble aggregation
 
 Both backends ensemble over multiple views of the table (e.g. feature shuffles),
