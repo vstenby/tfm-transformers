@@ -251,6 +251,46 @@ class TabularEmbedder:
             raise RuntimeError("TabularEmbedder is not fitted. Call fit(X, y) first.")
         return self._aggregate(self.adapter.encode(X))
 
+    def transform(self, X) -> np.ndarray:
+        """Alias for :meth:`encode`, for scikit-learn pipeline compatibility.
+
+        Lets the embedder act as a transformer step::
+
+            make_pipeline(TabularEmbedder("tabicl"), LogisticRegression())
+
+        Note that downstream sklearn steps expect 2D output, so use
+        ``aggregate="mean"`` or ``"concat"`` inside a pipeline.
+        """
+        return self.encode(X)
+
+    def fit_transform(self, X, y=None) -> np.ndarray:
+        """Fit on ``X`` and embed the same rows (``fit(X, y)`` then ``encode(X)``).
+
+        Each row is embedded with a labeled copy of itself in the context, so
+        the embeddings partially encode their own labels. That is fine for
+        retrieval and visualization; when the embeddings become features for
+        training a downstream model, prefer :meth:`fit_transform_oof`.
+        """
+        return self.fit(X, y).encode(X)
+
+    def get_params(self, deep: bool = True) -> dict:
+        """Parameters for this embedder (scikit-learn estimator API)."""
+        return {"model": self.model, "aggregate": self.aggregate, **self._backend_kwargs}
+
+    def set_params(self, **params) -> "TabularEmbedder":
+        """Set parameters and reset the backend adapter (scikit-learn estimator API).
+
+        Any previously fitted context is discarded; call ``fit`` again.
+        """
+        current = self.get_params()
+        current.update(params)
+        model = current.pop("model")
+        aggregate = current.pop("aggregate")
+        self.__init__(model, aggregate=aggregate, **current)
+        if hasattr(self, "_X_context"):
+            del self._X_context
+        return self
+
     def similarity(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
         """Pairwise cosine similarity between two sets of embeddings.
 

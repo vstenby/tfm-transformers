@@ -7,6 +7,8 @@
 Embeddings, similarity search, and retrieval for tabular data —<br>
 powered by tabular foundation models.
 
+[![test](https://github.com/vstenby/tfm-embeddings/actions/workflows/test.yml/badge.svg)](https://github.com/vstenby/tfm-embeddings/actions/workflows/test.yml)
+[![PyPI](https://img.shields.io/pypi/v/tfm-embeddings.svg)](https://pypi.org/project/tfm-embeddings/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 [![Backends](https://img.shields.io/badge/backends-TabICL%20·%20TabPFN%20·%20TabFM-orange.svg)](#backends)
@@ -26,7 +28,7 @@ retrieval, clustering, visualization, and feature extraction on tabular data.
 > #### Experimental Code Notice
 > This project is experimental and early-stage. APIs may change without notice.
 
-<img src="docs/embedding_gallery.png" alt="UMAP of held-out test embeddings for three datasets (rows) and three backends (columns)" width="100%">
+<img src="https://raw.githubusercontent.com/vstenby/tfm-embeddings/main/docs/embedding_gallery.png" alt="UMAP of held-out test embeddings for three datasets (rows) and three backends (columns)" width="100%">
 
 *Held-out test rows embedded by each backend (columns) on three datasets
 (rows: binary classification, 10-class classification, regression), then
@@ -46,6 +48,7 @@ the visible structure is genuinely inferred. Reproduce with
   and `fit_transform_oof` provides out-of-fold embeddings for downstream
   training.
 - **Ensemble control** — mean, concatenated, or raw per-member embeddings.
+- **scikit-learn compatible** — drop it in a `Pipeline` as a transformer step.
 
 ## Installation
 
@@ -183,6 +186,21 @@ Three things to know:
   fold — only you know your data's grouping structure.
 - **Cost is `n_fold + 1`** fits and encodes. Splits are stratified for
   classification targets.
+
+`TabularEmbedder` also implements the scikit-learn transformer API
+(`transform` / `fit_transform` / `get_params`), so it works directly in a
+pipeline:
+
+```python
+from sklearn.pipeline import make_pipeline
+
+pipe = make_pipeline(TabularEmbedder("tabicl"), LogisticRegression())
+pipe.fit(X_train, y_train).score(X_test, y_test)
+```
+
+Note that a pipeline's `fit` embeds training rows with themselves in the
+context (the self-influence described above) — convenient, but for the most
+honest training features use `fit_transform_oof` outside a pipeline.
 
 ## Examples
 

@@ -1,0 +1,34 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Cache model checkpoints
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-checkpoints-${{ runner.os }}
+
+      # TabPFN and TabFM tests skip themselves: TabPFN weights need license
+      # authentication (TABPFN_TOKEN) and TabFM checkpoints are multi-GB.
+      - name: Install
+        run: |
+          uv venv --python ${{ matrix.python-version }}
+          uv pip install ".[tabicl,test]"
+
+      - name: Run tests
+        run: .venv/bin/pytest -q
