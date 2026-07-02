@@ -1,23 +1,48 @@
+<div align="center">
+
 # tfm-embeddings
 
-**Sentence-transformers-style embeddings for tabular foundation models.**
+**SentenceTransformers, but for tables.**
 
-Tabular foundation models like [TabICL](https://github.com/soda-inria/tabicl) and
-[TabPFN](https://github.com/PriorLabs/TabPFN) compute rich per-row representations
-internally as part of in-context learning. `tfm-embeddings` exposes them behind
-the familiar encode/similarity API from
-[sentence-transformers](https://www.sbert.net/), for similarity search, retrieval,
-clustering, visualization, and feature extraction on tabular data.
+Embeddings, similarity search, and retrieval for tabular data —<br>
+powered by tabular foundation models.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+[![Backends](https://img.shields.io/badge/backends-TabICL%20·%20TabPFN%20·%20TabFM-orange.svg)](#backends)
+
+</div>
+
+Tabular foundation models like [TabICL](https://github.com/soda-inria/tabicl),
+[TabPFN](https://github.com/PriorLabs/TabPFN), and
+[Google TabFM](https://github.com/google-research/tabfm) compute rich per-row
+representations internally as part of in-context learning. `tfm-embeddings`
+exposes them behind the familiar encode/similarity API from
+[sentence-transformers](https://www.sbert.net/), for similarity search,
+retrieval, clustering, visualization, and feature extraction on tabular data.
 
 > ⚠️ Experimental, early-stage project. APIs may change.
 
-<img src="docs/test_embeddings_umap.png" alt="UMAP of held-out test embeddings on breast cancer for TabICLv2, TabPFN, and Google TabFM" width="100%">
+<img src="docs/embedding_gallery.png" alt="UMAP of held-out test embeddings for three datasets (rows) and three backends (columns)" width="100%">
 
-*UMAP of **held-out test rows** on breast cancer, embedded by all three backends
-through the same two lines of code: `model.fit(X_train, y_train)` then
-`model.encode(X_test)`. The test rows are never part of the context, so the
-separation is genuinely inferred. Reproduce with
-[`examples/visualize_test_embeddings.py`](examples/visualize_test_embeddings.py).*
+*Held-out test rows embedded by each backend (columns) on three datasets
+(rows: binary classification, 10-class classification, regression), then
+UMAP-projected and colored by the true class or target. Every panel uses the
+same two lines of code: `model.fit(X_train, y_train)` then
+`model.encode(X_test)` — and the test rows are never part of the context, so
+the visible structure is genuinely inferred. Reproduce with
+[`examples/embedding_gallery.py`](examples/embedding_gallery.py).*
+
+## ✨ Highlights
+
+- **One API, three foundation models** — TabICL, TabPFN, and Google TabFM
+  behind the same `fit` / `encode` / `similarity` / `search` interface.
+- **Retrieval built in** — top-k nearest-row search over your context table,
+  RAG-style.
+- **Leakage-aware by design** — rows are always embedded as unseen test rows,
+  and `fit_transform_oof` provides out-of-fold embeddings for downstream
+  training.
+- **Ensemble control** — mean, concatenated, or raw per-member embeddings.
 
 ## Installation
 
@@ -158,9 +183,16 @@ Three things to know:
 
 ## Examples
 
-See [`examples/`](examples/) for a retrieval walkthrough and UMAP
-visualizations on the breast cancer dataset, including the test-split
-comparison figure above.
+See [`examples/`](examples/):
+
+- [`breast_cancer_retrieval.py`](examples/breast_cancer_retrieval.py) —
+  fit a corpus, embed queries, retrieve the most similar rows.
+- [`embedding_gallery.py`](examples/embedding_gallery.py) — the gallery
+  figure above: three datasets × three backends.
+- [`visualize_test_embeddings.py`](examples/visualize_test_embeddings.py) —
+  single-dataset comparison of all backends on a held-out test split.
+- [`umap_visualization.py`](examples/umap_visualization.py) — minimal
+  full-dataset UMAP.
 
 ## Roadmap
 
