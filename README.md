@@ -116,6 +116,46 @@ controls how they are combined:
 - `"concat"`: concatenate members → `(n_rows, n_members * dim)`
 - `"none"`: raw members → `(n_members, n_rows, dim)`
 
+## Using embeddings as features (out-of-fold)
+
+For retrieval and visualization, `fit` + `encode` is all you need. But when
+embeddings become *features for training a downstream model*, there is a
+subtle trap: `encode(X_train)` after `fit(X_train, y_train)` embeds every
+training row with an identical, labeled copy of itself in the context, so
+each embedding partially encodes its own label. Held-out evaluation stays
+honest, but the downstream model learns to rely on a signal that is absent
+for genuinely unseen rows.
+
+`fit_transform_oof` removes that self-influence with out-of-fold embedding
+(following [A Closer Look at TabPFN v2](https://arxiv.org/abs/2502.17361)):
+the data is split into folds, each fold is embedded by a model fitted on the
+*other* folds, and a final full-data model is fitted for embedding unseen
+rows:
+
+```python
+model = TabularEmbedder("tabicl")
+
+train_embeds = model.fit_transform_oof(X_train, y_train, n_fold=5)  # leakage-free
+test_embeds = model.encode(X_test)                                  # full-data model
+
+clf = LogisticRegression().fit(train_embeds, y_train)
+clf.score(test_embeds, y_test)
+```
+
+Three things to know:
+
+- **`encode` never returns out-of-fold embeddings.** It always uses the final
+  full-data model, so `model.encode(X_train)` afterwards gives different
+  (self-influenced) vectors than the OOF ones. Keep the return value of
+  `fit_transform_oof`.
+- **Non-independent rows need `groups=`.** If the same entity appears in
+  multiple rows (duplicated records, repeated measurements per patient),
+  plain K-fold can place its copies in different folds and the label leaks
+  back in through the copy. Pass `groups=` to keep an entity's rows in one
+  fold — only you know your data's grouping structure.
+- **Cost is `n_fold + 1`** fits and encodes. Splits are stratified for
+  classification targets.
+
 ## Examples
 
 See [`examples/`](examples/) for a retrieval walkthrough and UMAP
@@ -124,8 +164,6 @@ comparison figure above.
 
 ## Roadmap
 
-- Out-of-fold embedding mode for leakage-free feature extraction
-  (following [A Closer Look at TabPFN v2](https://arxiv.org/abs/2502.17361))
 - More backends as they expose embeddings
 - Benchmarks for the `y=None` pseudo-target strategy
 

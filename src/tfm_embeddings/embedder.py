@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import numpy as np
+from sklearn.model_selection import GroupKFold, KFold, StratifiedGroupKFold, StratifiedKFold
+from sklearn.utils import _safe_indexing
+from sklearn.utils.multiclass import type_of_target
 
 from .adapters import resolve_backend
 
@@ -84,11 +87,13 @@ class TabularEmbedder:
             raise ValueError(f"aggregate must be 'mean', 'concat', or 'none', got '{aggregate}'.")
 
         backend_name, _, variant = model.partition("/")
-        adapter_cls = resolve_backend(backend_name)
+        self._adapter_cls = resolve_backend(backend_name)
+        self._variant = variant or None
+        self._backend_kwargs = backend_kwargs
 
         self.model = model
         self.aggregate = aggregate
-        self.adapter = adapter_cls(variant or None, **backend_kwargs)
+        self.adapter = self._adapter_cls(self._variant, **backend_kwargs)
 
     def _aggregate(self, embeddings: np.ndarray) -> np.ndarray:
         if self.aggregate == "mean":
@@ -120,6 +125,109 @@ class TabularEmbedder:
         self._X_context = X
         self.corpus_embeddings_ = None
         return self
+
+    def fit_transform_oof(
+        self,
+        X,
+        y=None,
+        *,
+        n_fold: int = 5,
+        groups=None,
+        shuffle: bool = False,
+        random_state: int | None = None,
+    ) -> np.ndarray:
+        """Out-of-fold embeddings of the training data, for downstream training.
+
+        ``fit(X, y)`` followed by ``encode(X)`` embeds every row with an
+        identical, labeled copy of itself in the context, so each embedding
+        partially encodes its own label. That is harmless for retrieval and
+        visualization, but when the embeddings become *features for training
+        another model*, the downstream model learns to rely on a signal that
+        is absent for genuinely unseen rows.
+
+        This method removes that self-influence: the data is split into
+        ``n_fold`` folds and each fold is embedded by a model fitted on the
+        *other* folds, so no row (or its label) is ever part of the context
+        that embeds it. Finally, one model is fitted on the full data — that
+        model serves all subsequent ``encode`` calls for unseen rows.
+        Follows "A Closer Look at TabPFN v2" (https://arxiv.org/abs/2502.17361).
+
+        Note the asymmetry: ``encode`` always uses the final full-data model
+        and never returns out-of-fold embeddings — calling ``encode(X)`` on
+        the training data afterwards gives different (self-influenced)
+        vectors. Keep this method's return value.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training rows.
+
+        y : array-like of shape (n_samples,) or None
+            Training targets. Discrete targets enable stratified splits.
+            With None, the pseudo-target mechanism applies per fold.
+
+        n_fold : int, default=5
+            Number of folds. Total cost is ``n_fold + 1`` fits and encodes.
+
+        groups : array-like of shape (n_samples,) or None, default=None
+            Group labels for rows that are not independent (duplicated
+            entities, repeated measurements). Rows sharing a group are kept
+            in the same fold, so an entity never appears in the context that
+            embeds it. Plain K-fold cannot detect this — it is your domain
+            knowledge.
+
+        shuffle : bool, default=False
+            Whether to shuffle rows before splitting. Ignored when ``groups``
+            is given for a non-classification target (``GroupKFold``).
+
+        random_state : int or None, default=None
+            Seed for the split when ``shuffle=True``.
+
+        Returns
+        -------
+        np.ndarray
+            Out-of-fold embeddings aligned to the original row order,
+            aggregated according to ``aggregate``.
+        """
+        if n_fold < 2:
+            raise ValueError(f"n_fold must be >= 2, got {n_fold}.")
+
+        y_arr = None if y is None else np.asarray(y)
+        is_classification = y_arr is not None and type_of_target(y_arr) in ("binary", "multiclass")
+
+        rs = random_state if shuffle else None
+        if groups is not None:
+            if is_classification:
+                cv = StratifiedGroupKFold(n_splits=n_fold, shuffle=shuffle, random_state=rs)
+            else:
+                cv = GroupKFold(n_splits=n_fold)
+            splits = cv.split(X, y_arr, groups)
+        elif is_classification:
+            cv = StratifiedKFold(n_splits=n_fold, shuffle=shuffle, random_state=rs)
+            splits = cv.split(X, y_arr)
+        else:
+            cv = KFold(n_splits=n_fold, shuffle=shuffle, random_state=rs)
+            splits = cv.split(X)
+
+        chunks = []
+        val_indices = []
+        for train_idx, val_idx in splits:
+            fold_adapter = self._adapter_cls(self._variant, **self._backend_kwargs)
+            fold_adapter.fit(
+                _safe_indexing(X, train_idx),
+                None if y_arr is None else y_arr[train_idx],
+            )
+            chunks.append(fold_adapter.encode(_safe_indexing(X, val_idx)))
+            val_indices.append(val_idx)
+
+        oof = np.concatenate(chunks, axis=1)
+        order = np.argsort(np.concatenate(val_indices))
+        oof = oof[:, order]
+
+        # Final full-data model for embedding unseen rows via encode()
+        self.fit(X, y)
+
+        return self._aggregate(oof)
 
     def encode(self, X) -> np.ndarray:
         """Embed rows against the fitted context.
