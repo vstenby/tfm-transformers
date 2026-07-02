@@ -24,16 +24,16 @@ def cosine_similarity(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     return a @ b.T
 
 
-class TabularTransformer:
+class TabularEmbedder:
     """Sentence-transformers-style embeddings for tabular foundation models.
 
     Tabular foundation models (TabICL, TabPFN, ...) compute rich per-row
     representations internally. This class exposes them behind a familiar
     encode/similarity API::
 
-        from tfm_transformers import TabularTransformer
+        from tfm_embeddings import TabularEmbedder
 
-        model = TabularTransformer("tabicl")
+        model = TabularEmbedder("tabicl")
 
         model.fit(X_corpus, y_corpus)          # 1. set the context table
         embeddings = model.encode(X_corpus)    # 2. embed rows -> (n, dim)
@@ -98,7 +98,7 @@ class TabularTransformer:
             return embeddings.transpose(1, 0, 2).reshape(n_rows, n_members * dim)
         return embeddings  # "none"
 
-    def fit(self, X, y=None) -> "TabularTransformer":
+    def fit(self, X, y=None) -> "TabularEmbedder":
         """Set the context table that all embeddings are conditioned on.
 
         Parameters
@@ -114,7 +114,7 @@ class TabularTransformer:
 
         Returns
         -------
-        self : TabularTransformer
+        self : TabularEmbedder
         """
         self.adapter.fit(X, y)
         self._X_context = X
@@ -140,7 +140,7 @@ class TabularTransformer:
             (``(n_rows, dim)`` for the default ``"mean"``).
         """
         if not hasattr(self, "_X_context"):
-            raise RuntimeError("TabularTransformer is not fitted. Call fit(X, y) first.")
+            raise RuntimeError("TabularEmbedder is not fitted. Call fit(X, y) first.")
         return self._aggregate(self.adapter.encode(X))
 
     def similarity(self, a: np.ndarray, b: np.ndarray) -> np.ndarray:
@@ -178,7 +178,7 @@ class TabularTransformer:
             Corresponding cosine similarities.
         """
         if not hasattr(self, "_X_context"):
-            raise RuntimeError("TabularTransformer is not fitted. Call fit(X, y) first.")
+            raise RuntimeError("TabularEmbedder is not fitted. Call fit(X, y) first.")
         if self.aggregate == "none":
             raise ValueError("search requires 2D embeddings; use aggregate='mean' or 'concat'.")
 

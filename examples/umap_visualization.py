@@ -7,12 +7,12 @@ import matplotlib.pyplot as plt
 import umap
 from sklearn.datasets import load_breast_cancer
 
-from tfm_transformers import TabularTransformer
+from tfm_embeddings import TabularEmbedder
 
 data = load_breast_cancer()
 X, y = data.data, data.target
 
-model = TabularTransformer("tabicl").fit(X, y)
+model = TabularEmbedder("tabicl").fit(X, y)
 embeddings = model.encode(X)  # rows embedded as test rows: no label leakage
 print(f"embeddings: {embeddings.shape}")
 

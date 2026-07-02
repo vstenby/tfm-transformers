@@ -62,7 +62,7 @@ class TabFMAdapter(BackendAdapter):
             raise ImportError(
                 "The TabFM backend requires the tabfm package with its PyTorch "
                 "extra (and Python >= 3.11). "
-                "Install it with: pip install tfm-transformers[tabfm]"
+                "Install it with: pip install tfm-embeddings[tabfm]"
             ) from e
         try:
             from tabfm import tabfm_v1_0_0_pytorch  # noqa: F401

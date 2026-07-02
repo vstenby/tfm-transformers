@@ -1,5 +1,5 @@
 [project]
-name = "tfm-transformers"
+name = "tfm-embeddings"
 version = "0.1.0"
 description = "Sentence-transformers-style embeddings for tabular foundation models (TabICL, TabPFN, ...)"
 readme = "README.md"
@@ -23,15 +23,15 @@ dependencies = [
 tabicl = ["tabicl>=2.1"]
 tabpfn = ["tabpfn>=2.0"]
 tabfm = ["tabfm[pytorch]>=1.0.0; python_version >= '3.11'"]
-all = ["tfm-transformers[tabicl,tabpfn,tabfm]"]
+all = ["tfm-embeddings[tabicl,tabpfn,tabfm]"]
 test = ["pytest"]
 
 [project.urls]
-Repository = "https://github.com/vstenby/tfm-transformers"
+Repository = "https://github.com/vstenby/tfm-embeddings"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/tfm_transformers"]
+packages = ["src/tfm_embeddings"]

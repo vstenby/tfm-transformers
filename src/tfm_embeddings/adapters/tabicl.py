@@ -59,7 +59,7 @@ class TabICLAdapter(BackendAdapter):
         except ImportError as e:
             raise ImportError(
                 "The TabICL backend requires the tabicl package. "
-                "Install it with: pip install tfm-transformers[tabicl]"
+                "Install it with: pip install tfm-embeddings[tabicl]"
             ) from e
 
         self.variant = variant

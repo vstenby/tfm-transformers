@@ -14,7 +14,7 @@ class BackendAdapter(ABC):
 
     Adapters return raw per-ensemble-member embeddings of shape
     ``(n_members, n_rows, embed_dim)``; aggregation across members is handled
-    by :class:`tfm_transformers.TabularTransformer`.
+    by :class:`tfm_embeddings.TabularEmbedder`.
     """
 
     #: Set after fit; None if the backend cannot know the dimension upfront.

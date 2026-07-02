@@ -7,9 +7,9 @@ from .base import BackendAdapter
 #: Registry mapping backend names to (module, class). Modules are imported
 #: lazily so that installing one backend does not require the others.
 _REGISTRY: dict[str, tuple[str, str]] = {
-    "tabicl": ("tfm_transformers.adapters.tabicl", "TabICLAdapter"),
-    "tabpfn": ("tfm_transformers.adapters.tabpfn", "TabPFNAdapter"),
-    "tabfm": ("tfm_transformers.adapters.tabfm", "TabFMAdapter"),
+    "tabicl": ("tfm_embeddings.adapters.tabicl", "TabICLAdapter"),
+    "tabpfn": ("tfm_embeddings.adapters.tabpfn", "TabPFNAdapter"),
+    "tabfm": ("tfm_embeddings.adapters.tabfm", "TabFMAdapter"),
 }
 
 

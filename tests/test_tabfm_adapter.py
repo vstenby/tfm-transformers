@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from sklearn.datasets import make_classification, make_regression
 
-from tfm_transformers import TabularTransformer
+from tfm_embeddings import TabularEmbedder
 
 tabfm = pytest.importorskip("tabfm")
 if not hasattr(tabfm, "tabfm_v1_0_0_pytorch"):
@@ -20,7 +20,7 @@ def data():
 @pytest.fixture(scope="module")
 def fitted_model(data):
     X_corpus, y_corpus, _ = data
-    return TabularTransformer("tabfm", n_estimators=2).fit(X_corpus, y_corpus)
+    return TabularEmbedder("tabfm", n_estimators=2).fit(X_corpus, y_corpus)
 
 
 def test_encode_shapes(fitted_model, data):
@@ -51,7 +51,7 @@ def test_search(fitted_model, data):
 
 def test_unlabeled_context(data):
     X_corpus, _, X_query = data
-    model = TabularTransformer("tabfm", n_estimators=2).fit(X_corpus)  # y=None
+    model = TabularEmbedder("tabfm", n_estimators=2).fit(X_corpus)  # y=None
     emb = model.encode(X_query)
     assert emb.shape == (10, model.embedding_dim)
     assert np.all(np.isfinite(emb))
@@ -59,6 +59,6 @@ def test_unlabeled_context(data):
 
 def test_regression_context():
     X, y = make_regression(n_samples=50, n_features=5, random_state=42)
-    model = TabularTransformer("tabfm", n_estimators=2).fit(X[:40], y[:40])
+    model = TabularEmbedder("tabfm", n_estimators=2).fit(X[:40], y[:40])
     emb = model.encode(X[40:])
     assert emb.shape == (10, model.embedding_dim)

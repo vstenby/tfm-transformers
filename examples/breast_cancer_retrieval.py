@@ -7,13 +7,13 @@ similar corpus rows for a set of query rows.
 from sklearn.datasets import load_breast_cancer
 from sklearn.model_selection import train_test_split
 
-from tfm_transformers import TabularTransformer
+from tfm_embeddings import TabularEmbedder
 
 X, y = load_breast_cancer(return_X_y=True)
 X_corpus, X_query, y_corpus, y_query = train_test_split(X, y, test_size=100, random_state=0)
 
 # 1. Load a tabular foundation model
-model = TabularTransformer("tabicl")
+model = TabularEmbedder("tabicl")
 
 # 2. Set the context table -- all embeddings are conditioned on it
 model.fit(X_corpus, y_corpus)

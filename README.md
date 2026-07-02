@@ -1,10 +1,10 @@
-# tfm-transformers
+# tfm-embeddings
 
 **Sentence-transformers-style embeddings for tabular foundation models.**
 
 Tabular foundation models like [TabICL](https://github.com/soda-inria/tabicl) and
 [TabPFN](https://github.com/PriorLabs/TabPFN) compute rich per-row representations
-internally as part of in-context learning. `tfm-transformers` exposes them behind
+internally as part of in-context learning. `tfm-embeddings` exposes them behind
 the familiar encode/similarity API from
 [sentence-transformers](https://www.sbert.net/), for similarity search, retrieval,
 clustering, visualization, and feature extraction on tabular data.
@@ -22,19 +22,19 @@ separation is genuinely inferred. Reproduce with
 ## Installation
 
 ```bash
-pip install tfm-transformers[tabicl]   # TabICL backend
-pip install tfm-transformers[tabpfn]   # TabPFN backend
-pip install tfm-transformers[tabfm]    # Google TabFM backend (Python >= 3.11)
-pip install tfm-transformers[all]      # everything
+pip install tfm-embeddings[tabicl]   # TabICL backend
+pip install tfm-embeddings[tabpfn]   # TabPFN backend
+pip install tfm-embeddings[tabfm]    # Google TabFM backend (Python >= 3.11)
+pip install tfm-embeddings[all]      # everything
 ```
 
 ## Usage
 
 ```python
-from tfm_transformers import TabularTransformer
+from tfm_embeddings import TabularEmbedder
 
 # 1. Load a tabular foundation model
-model = TabularTransformer("tabicl")
+model = TabularEmbedder("tabicl")
 
 # 2. Set the context table — all embeddings are conditioned on it
 model.fit(X_corpus, y_corpus)  # y is optional
@@ -82,7 +82,7 @@ never visible to the model — embedding your corpus does not leak its labels.
 Backend-specific options are passed through the constructor:
 
 ```python
-model = TabularTransformer("tabicl", n_estimators=4, device="cpu", random_state=0)
+model = TabularEmbedder("tabicl", n_estimators=4, device="cpu", random_state=0)
 ```
 
 ### Do I need `y`?
@@ -108,7 +108,7 @@ therefore the embeddings.
 
 ### Ensemble aggregation
 
-Both backends ensemble over multiple views of the table (e.g. feature shuffles),
+All backends ensemble over multiple views of the table (e.g. feature shuffles),
 and each ensemble member produces embeddings in its own space. `aggregate`
 controls how they are combined:
 

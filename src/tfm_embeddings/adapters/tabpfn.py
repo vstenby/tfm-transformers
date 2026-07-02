@@ -50,7 +50,7 @@ class TabPFNAdapter(BackendAdapter):
         except ImportError as e:
             raise ImportError(
                 "The TabPFN backend requires the tabpfn package. "
-                "Install it with: pip install tfm-transformers[tabpfn]"
+                "Install it with: pip install tfm-embeddings[tabpfn]"
             ) from e
 
         self.variant = variant

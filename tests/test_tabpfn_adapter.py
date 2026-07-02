@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 from sklearn.datasets import make_classification
 
-from tfm_transformers import TabularTransformer
+from tfm_embeddings import TabularEmbedder
 
 pytest.importorskip("tabpfn")
 
@@ -30,7 +30,7 @@ def data():
 
 def test_encode_and_search(data):
     X_corpus, y_corpus, X_query = data
-    model = TabularTransformer("tabpfn", n_estimators=2).fit(X_corpus, y_corpus)
+    model = TabularEmbedder("tabpfn", n_estimators=2).fit(X_corpus, y_corpus)
 
     corpus_emb = model.encode(X_corpus)
     query_emb = model.encode(X_query)
@@ -46,7 +46,7 @@ def test_encode_and_search(data):
 
 def test_unlabeled_context(data):
     X_corpus, _, X_query = data
-    model = TabularTransformer("tabpfn", n_estimators=2).fit(X_corpus)  # y=None
+    model = TabularEmbedder("tabpfn", n_estimators=2).fit(X_corpus)  # y=None
     emb = model.encode(X_query)
     assert emb.ndim == 2
     assert emb.shape[0] == 10
