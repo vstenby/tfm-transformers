@@ -11,6 +11,14 @@ clustering, visualization, and feature extraction on tabular data.
 
 > ⚠️ Experimental, early-stage project. APIs may change.
 
+<img src="docs/test_embeddings_umap.png" alt="UMAP of held-out test embeddings on breast cancer for TabICLv2, TabPFN, and Google TabFM" width="100%">
+
+*UMAP of **held-out test rows** on breast cancer, embedded by all three backends
+through the same two lines of code: `model.fit(X_train, y_train)` then
+`model.encode(X_test)`. The test rows are never part of the context, so the
+separation is genuinely inferred. Reproduce with
+[`examples/visualize_test_embeddings.py`](examples/visualize_test_embeddings.py).*
+
 ## Installation
 
 ```bash
@@ -110,8 +118,9 @@ controls how they are combined:
 
 ## Examples
 
-See [`examples/`](examples/) for a retrieval walkthrough and a UMAP
-visualization on the breast cancer dataset.
+See [`examples/`](examples/) for a retrieval walkthrough and UMAP
+visualizations on the breast cancer dataset, including the test-split
+comparison figure above.
 
 ## Roadmap
 
